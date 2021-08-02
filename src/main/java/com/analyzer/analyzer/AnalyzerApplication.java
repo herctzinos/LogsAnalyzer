@@ -1,12 +1,8 @@
 package com.analyzer.analyzer;
 
-import com.analyzer.analyzer.controller.RecordController;
 import com.analyzer.analyzer.utilities.AnalyzerUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import java.util.ArrayList;
-import java.util.regex.Matcher;
 
 
 @SpringBootApplication

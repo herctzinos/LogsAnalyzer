@@ -15,6 +15,18 @@ public class AnalyzerUtils {
     public static String fileName = "access_log_Aug95";
     public static ArrayList<Matcher> analyzedLogsList = new ArrayList<>();
 
+    public static String getAccessLogRegex() {
+
+        String regex1 = "^(\\S+)";                              // Client IP
+        String regex2 = " (\\S+)";                              // -
+        String regex3 = " (\\S+)";                              // -
+        String regex4 = " \\[(.+?)\\]";                         // Date
+        String regex5 = " \\\"(.+?)\\\"";                       // request method and url
+        String regex6 = " (\\d{3})";                            // HTTP code
+        String regex7 = " (\\S+)";                              // Number of bytes
+        return regex1 + regex2 + regex3 + regex4 + regex5 + regex6 + regex7;
+    }
+
     public static ArrayList<Matcher> analyzeLogFile(String path, String fileName) {
         ArrayList<Matcher> accessLogEntryMatcherList = new ArrayList<>();
         Pattern accessLogPattern = Pattern.compile(AnalyzerUtils.getAccessLogRegex());
@@ -39,17 +51,5 @@ public class AnalyzerUtils {
             e.printStackTrace();
         }
         return accessLogEntryMatcherList;
-    }
-
-    public static String getAccessLogRegex() {
-
-        String regex1 = "^(\\S+)";                              // Client IP
-        String regex2 = " (\\S+)";                              // -
-        String regex3 = " (\\S+)";                              // -
-        String regex4 = " \\[(.+?)\\]";                         // Date
-        String regex5 = " \\\"(.+?)\\\"";                       // request method and url
-        String regex6 = " (\\d{3})";                            // HTTP code
-        String regex7 = " (\\S+)";                              // Number of bytes
-        return regex1 + regex2 + regex3 + regex4 + regex5 + regex6 + regex7;
     }
 }

@@ -5,14 +5,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -22,109 +16,95 @@ public class RecordController {
 
     @GetMapping("/top10PagesRequested")
     public HashMap<String, Map<String, Long>> getTop10Pages() {
-        Map<String, Long> occurrences =
+        Map<String, Long> topRequestedPagesOccurrences =
                 AnalyzerUtils.analyzedLogsList.stream().map(x -> x.group(5)).collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
-        Map<String, Long> topTen =
-                occurrences.entrySet().stream()
+        Map<String, Long> topTenRequestedPages =
+                topRequestedPagesOccurrences.entrySet().stream()
                         .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                         .limit(10)
                         .collect(Collectors.toMap(
                                 Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
         HashMap<String, Map<String, Long>> map = new HashMap<>();
-        map.put("topPagesRequested", topTen);
+        map.put("topPagesRequested", topTenRequestedPages);
         return map;
     }
 
     @GetMapping("/successfulRequestsPercentage")
     public HashMap<String, Float> successfulRequestsPercentage() {
-        Map<String, Long> occurrences =
+        Map<String, Long> httpCodeOccurrences =
                 AnalyzerUtils.analyzedLogsList.stream().map(x -> x.group(6)).collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
-        Map<String, Long> topHttp =
-                occurrences.entrySet().stream()
-                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                        .limit(10)
-                        .collect(Collectors.toMap(
-                                Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-        long sum = topHttp.entrySet().stream()
+        long sumOfSuccessfulCodes = httpCodeOccurrences.entrySet().stream()
                 .filter(o -> o.getKey().matches("(^2|^3).*"))
                 .mapToLong(o -> o.getValue()).sum();
         HashMap<String, Float> map = new HashMap<>();
-        map.put("successfulRequestsPercentage", ((sum * 100.0f) / AnalyzerUtils.analyzedLogsList.size()));
+        map.put("successfulRequestsPercentage", ((sumOfSuccessfulCodes * 100.0f) / AnalyzerUtils.analyzedLogsList.size()));
         return map;
     }
 
     @GetMapping("/unsuccessfulRequestsPercentage")
     public HashMap<String, Float> unSuccessfulRequestsPercentage() {
-        Map<String, Long> occurrences =
+        Map<String, Long> httpCodeOccurrences =
                 AnalyzerUtils.analyzedLogsList.stream().map(x -> x.group(6))
                         .collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
-        Map<String, Long> topHttp =
-                occurrences.entrySet().stream()
-                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                        .limit(10)
-                        .collect(Collectors.toMap(
-                                Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-        long sum = topHttp.entrySet().stream()
+        long sumOfUnsuccessfulCodes = httpCodeOccurrences.entrySet().stream()
                 .filter(o -> !o.getKey().matches("(^2|^3).*"))
                 .mapToLong(o -> o.getValue()).sum();
         HashMap<String, Float> map = new HashMap<>();
-        map.put("unsuccessfulRequestsPercentage", ((sum * 100.0f) / AnalyzerUtils.analyzedLogsList.size()));
+        map.put("unsuccessfulRequestsPercentage", ((sumOfUnsuccessfulCodes * 100.0f) / AnalyzerUtils.analyzedLogsList.size()));
         return map;
     }
 
     @GetMapping("/top10FailedRequests")
     public HashMap<String, Map<String, Long>> getTop10failedRequests() {
 
-        List<Matcher> failedrequests =
+        List<Matcher> failedRequests =
                 AnalyzerUtils.analyzedLogsList.stream()
                         .filter(x -> !x.group(6).matches("(^2|^3).*"))
                         .collect(Collectors.toList());
 
-        Map<String, Long> failedOccurrences =
-                failedrequests.stream().map(x -> x.group(1))
+        Map<String, Long> occurrencesOfFailedRequests =
+                failedRequests.stream().map(x -> x.group(1))
                         .collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
-        Map<String, Long> topTen = getTop10OccurrencesSorted(failedOccurrences);
+        Map<String, Long> topTenFailedRequestsOccurrences = getTop10OccurrencesSorted(occurrencesOfFailedRequests);
 
         HashMap<String, Map<String, Long>> map = new HashMap<>();
-        map.put("top10FailedRequests", topTen);
+        map.put("top10FailedRequests", topTenFailedRequestsOccurrences);
         return map;
     }
 
     @GetMapping("/top10Requests")
     public HashMap<String, Map<String, Long>> getTop10Requests() {
 
-        Map<String, Long> occurrences =
+        Map<String, Long> occurrencesOfRequests =
                 AnalyzerUtils.analyzedLogsList.stream().map(x -> x.group(1))
                         .collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
-        Map<String, Long> topTen = getTop10OccurrencesSorted(occurrences);
+        Map<String, Long> topTenOccurrencesOfRequests = getTop10OccurrencesSorted(occurrencesOfRequests);
 
         HashMap<String, Map<String, Long>> map = new HashMap<>();
-        map.put("top10Requests", topTen);
+        map.put("top10Requests", topTenOccurrencesOfRequests);
         return map;
     }
 
     @GetMapping("/top10RequestsDetailed")
     public HashMap<String, HashMap<String, Map<Object, Long>>> getTop10RequestsDetailed() {
-        HashMap<String, Map<Object, Long>> finalOutput = new HashMap<>();
-        Map<String, Long> occurrences =
+        HashMap<String, Map<Object, Long>> top10RequestsDetailedOutput = new HashMap<>();
+        Map<String, Long> occurrencesOfRequests =
                 AnalyzerUtils.analyzedLogsList.stream().map(x -> x.group(1))
                         .collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
-        List<Map.Entry<String, Long>> topTen =
-                occurrences.entrySet().stream()
+        List<Map.Entry<String, Long>> topTenOccurrencesOfRequests =
+                occurrencesOfRequests.entrySet().stream()
                         .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
                         .limit(10)
                         .collect(Collectors.toList());
 
-        for (Map.Entry<String, Long> pageMatcher : topTen) {
+        for (Map.Entry<String, Long> pageMatcher : topTenOccurrencesOfRequests) {
             Map<Object, Long> topPagesRequestedForEachTop10 =
                     AnalyzerUtils.analyzedLogsList.stream()
                             .filter(x -> x.group(1).matches(pageMatcher.getKey()))
@@ -135,10 +115,10 @@ public class RecordController {
                             .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
                             .limit(5)
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-            finalOutput.put(pageMatcher.getKey(), topFiveDetailed);
+            top10RequestsDetailedOutput.put(pageMatcher.getKey(), topFiveDetailed);
         }
         HashMap<String, HashMap<String, Map<Object, Long>>> map = new HashMap<>();
-        map.put("top10Requests", finalOutput);
+        map.put("top10Requests", top10RequestsDetailedOutput);
         return map;
     }
 
